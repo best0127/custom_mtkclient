@@ -1226,8 +1226,10 @@ class XmlFlashExt(metaclass=LogBase):
         if self.mtk.config.chipconfig.efuse_addr is not None:
             base = self.mtk.config.chipconfig.efuse_addr
             addr = base + 0x90
-            data = bytearray(self.mtk.daloader.peek_reg(addr=addr, length=0x30))
-            return data
+            data = self.mtk.daloader.peek_reg(addr=addr, length=0x30)
+            if data is None:
+                return None
+            return bytearray(data)
         return None
 
     def readfuses(self):
