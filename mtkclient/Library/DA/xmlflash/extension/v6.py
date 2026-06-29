@@ -968,7 +968,7 @@ class XmlFlashExt(metaclass=LogBase):
                 return None
             res = [unpack("<I", res[i:i + 4])[0] for i in range(0, len(res), 4)]
         if res is None:
-            return None
+            return 0 if dwords == 1 else None
         if isinstance(res, list):
             self.debug(f"RX: {hex(addr)} -> " + bytearray(b"".join(pack("<I", val) for val in res)).hex())
         else:
