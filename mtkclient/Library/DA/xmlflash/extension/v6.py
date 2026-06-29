@@ -964,8 +964,11 @@ class XmlFlashExt(metaclass=LogBase):
             res = self.custom_readregister(addr, dwords)
         else:
             res = self.custom_read(addr, dwords * 4)
+            if res is None:
+                return None
             res = [unpack("<I", res[i:i + 4])[0] for i in range(0, len(res), 4)]
-
+        if res is None:
+            return None
         if isinstance(res, list):
             self.debug(f"RX: {hex(addr)} -> " + bytearray(b"".join(pack("<I", val) for val in res)).hex())
         else:
