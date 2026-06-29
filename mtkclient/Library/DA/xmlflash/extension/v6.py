@@ -895,6 +895,8 @@ class XmlFlashExt(metaclass=LogBase):
 
     def custom_read_reg(self, addr: int, length: int) -> bytes:
         tmp = self.custom_readregister(addr, length // 4)
+        if tmp is None:
+            return None
         if isinstance(tmp, int):
             return int.to_bytes(tmp, 4, 'little')
         else:

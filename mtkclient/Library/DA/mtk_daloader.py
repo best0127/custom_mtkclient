@@ -364,6 +364,8 @@ class DAloader(metaclass=LogBase):
             data = self.xmlft.custom_read_reg(addr=aligned_addr, length=aligned_length)
         else:
             return None
+        if data is None:
+            return None
         return data[addr_offset:addr_offset + length]
 
     def dump_brom(self, filename):
