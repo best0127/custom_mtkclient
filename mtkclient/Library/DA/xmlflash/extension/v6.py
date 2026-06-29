@@ -1257,6 +1257,9 @@ class XmlFlashExt(metaclass=LogBase):
         return
 
     def generate_keys(self):
+        if not self.xflash.daext:
+            self.warning("DA XML extensions not loaded, cannot generate keys.")
+            return None
         if self.config.hwcode in [0x2601, 0x6572]:
             base = 0x11141000
         elif self.config.hwcode == 0x6261:
