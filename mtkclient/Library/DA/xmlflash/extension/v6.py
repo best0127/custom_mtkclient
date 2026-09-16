@@ -35,6 +35,15 @@ rpmb_error = [
     "Authentication key not yet programmed"
 ]
 
+
+def rpmb_error_msg(resp: int) -> str:
+    """Maps an RPMB result code to its message. Codes outside the JEDEC set are
+    reported as-is instead of being silently dropped."""
+    if 0 < resp < len(rpmb_error):
+        return rpmb_error[resp]
+    return f"Unknown RPMB error: {hex(resp)}"
+
+
 RET_32_R0 = b"\x00\x00\xA0\xE3\x1E\xFF\x2F\xE1"
 
 class XmlFlashExt(metaclass=LogBase):
@@ -634,10 +643,7 @@ class XmlFlashExt(metaclass=LogBase):
                     tmp = self.xflash.get_response(raw=True)
                     if len(tmp) != 0x100:
                         resp = int.from_bytes(tmp, 'little')
-                        if resp in rpmb_error:
-                            msg = rpmb_error[resp]
-                        else:
-                            msg = f"Error: {hex(resp)}"
+                        msg = rpmb_error_msg(resp)
                         self.error(f"Error on sector {hex(sector)}: {msg})")
                         return b""
                     else:
@@ -664,8 +670,7 @@ class XmlFlashExt(metaclass=LogBase):
                     self.xsend(data[i * 0x100:(i * 0x100) + 0x100])
                     resp = unpack("<H", self.xflash.get_response(raw=True))[0]
                     if resp != 0:
-                        if resp in rpmb_error:
-                            self.error(rpmb_error[resp])
+                        self.error(f"Error on sector {hex(sector + i)}: {rpmb_error_msg(resp)}")
                         result = self.xflash.get_response()
                         self.xflash.ack()
                         # CMD:START
@@ -1060,7 +1065,7 @@ class XmlFlashExt(metaclass=LogBase):
                 return status, data
         return -1, b""
 
-    def seccfg(self, lockflag):
+    def seccfg(self, lockflag, critical=False):
         if lockflag not in ["unlock", "lock"]:
             return False, "Valid flags are: unlock, lock"
         data, guid_gpt = self.xflash.partition.get_gpt(self.mtk.config.gpt_settings, "user")
@@ -1103,7 +1108,10 @@ class XmlFlashExt(metaclass=LogBase):
                 sc_org = SecCfgV4(hwc, self.mtk, self.custom_sej_hw)
             else:
                 return False, "Unknown lockstate or no lockstate"
-        ret, writedata = sc_org.create(lockflag=lockflag)
+        if isinstance(sc_org, SecCfgV4):
+            ret, writedata = sc_org.create(lockflag=lockflag, critical=critical)
+        else:
+            ret, writedata = sc_org.create(lockflag=lockflag)
         if ret is False:
             return False, writedata
         if self.xflash.writeflash(addr=partition.sector * self.mtk.daloader.daconfig.pagesize,

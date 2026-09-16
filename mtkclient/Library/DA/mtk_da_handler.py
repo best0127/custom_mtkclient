@@ -1452,7 +1452,7 @@ class DaHandler(metaclass=LogBase):
             elif subcmd == "efuse":
                 self.da_efuse()
             elif subcmd == "seccfg":
-                v = mtk.daloader.seccfg(args.flag)
+                v = mtk.daloader.seccfg(args.flag, critical=args.critical)
                 if v[0]:
                     self.info(v[1])
                 else:

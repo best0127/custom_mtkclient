@@ -435,13 +435,13 @@ class DAloader(metaclass=LogBase):
     def is_patched(self):
         return self.da.patch
 
-    def seccfg(self, lockflag):
+    def seccfg(self, lockflag, critical=False):
         if self.flashmode == DAmodes.XFLASH:
-            return self.xft.seccfg(lockflag)
+            return self.xft.seccfg(lockflag, critical=critical)
         elif self.flashmode == DAmodes.LEGACY:
-            return self.lft.seccfg(lockflag)
+            return self.lft.seccfg(lockflag, critical=critical)
         elif self.flashmode == DAmodes.XML:
-            return self.xmlft.seccfg(lockflag)
+            return self.xmlft.seccfg(lockflag, critical=critical)
 
     def nvitem(self, data=None, filename=None, encrypt=False, otp=None, seed=None, aeskey=None, display: bool = True):
         if data:

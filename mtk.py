@@ -313,6 +313,8 @@ def main():
 
     da_unlock = da_subs.add_parser("seccfg", parents=[base], help="Unlock device / Configure seccfg")
     da_unlock.add_argument('flag', type=str, help="Needed flag (unlock,lock)")
+    da_unlock.add_argument('--critical', action="store_true", default=False,
+                           help="Retain legacy V4 behavior by updating the dm-verity state")
 
     # Minimal commands
     subparsers.add_parser("devices", help=CMDS_HELP["devices"])\

@@ -2126,8 +2126,8 @@ hwconfig = {
     0x6899: Chipconfig(
         # new crypto hw, Xiaomi 15T
         var1=0xA,
-        watchdog=0x1C010000,
-        uart=0x16010000,
+        watchdog=0x1C00B000,
+        uart=0x11001000,
         brom_payload_addr=0x100A00,
         da_payload_addr=0x201000,
         pl_payload_addr=0x40200000,
@@ -2146,9 +2146,9 @@ hwconfig = {
         # meid_addr=0x1008EC,
         # socid_addr=0x100934,
         # prov_addr=0x1066C0,
-        efuse_addr=0x13260000,
+        efuse_addr=0x11F10000,
         damode=DAmodes.XML,
-        dacode=0x1357,
+        dacode=0x6899,
         has64bit=True,
         name="MT6899",
         description="Dimensity 8400 Turbo/Ultra"
