@@ -273,7 +273,7 @@ class DAXFlash(metaclass=LogBase):
         pkt2 = pack("<III", self.cmd.MAGIC, self.data_type.DT_PROTOCOL_FLOW, len(data))
         if self.usbwrite(pkt2):
             bytestowrite = len(data)
-            maxoutsize = self.mtk.port.cdc.EP_OUT.wMaxPacketSize
+            maxoutsize = self.mtk.port.cdc.get_write_packetsize()
             pos = 0
             while bytestowrite > 0:
                 if self.usbwrite(data[pos:pos + maxoutsize]):
@@ -722,7 +722,7 @@ class DAXFlash(metaclass=LogBase):
         # Get optimal packet sizes
         plen = self.get_packet_length()
         read_packet_length = plen.read_packet_length if plen else 0x100000  # fallback 1MB
-        max_usb_packet = self.mtk.port.cdc.EP_IN.wMaxPacketSize
+        max_usb_packet = self.mtk.port.cdc.get_read_packetsize()
         bytesread = 0
         try:
             if self.cmd_read_data(addr=addr, size=length, storage=storage, parttype=parttype):
@@ -1153,7 +1153,10 @@ class DAXFlash(metaclass=LogBase):
                 self.info("Uploading stage 2...")
                 stage = stage + 1
                 loaded = False
-                if not self.mtk.daloader.patch and not self.mtk.config.stock and connagent == b"preloader":
+                carbonara_agent = connagent == b"preloader" or (
+                    connagent == b"brom" and self.mtk.config.ptype == "carbonara"
+                )
+                if not self.mtk.daloader.patch and not self.mtk.config.stock and carbonara_agent:
                     if (self.carbonara is not None and
                             self.mtk.config.target_config["sbc"]):
                         # Do NOT patch da1 on usage of carbonara

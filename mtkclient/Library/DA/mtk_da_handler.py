@@ -111,7 +111,11 @@ class DaHandler(metaclass=LogBase):
     def connect(self, mtk, directory:str = None):
         if directory is None:
             directory = "."
-        mtk.port.cdc.connected = mtk.port.cdc.connect()
+        # NOTE: single attempt with an exception guard. The actual wait/retry
+        # loop lives in mtk.preloader.init() (port.handshake), which must run
+        # while the port is still unclaimed so it can catch the plug-in
+        # handshake; blocking here would skip it and break fresh sessions.
+        mtk.port.wait_for_device(max_attempts=1, wait=False)
         if mtk.port.cdc.connected is None or not mtk.port.cdc.connected or mtk.serialportname is not None:
             mtk.preloader.init(directory=directory)
             if self.config.internal_flash and self.mtk.config.iot:
@@ -129,8 +133,15 @@ class DaHandler(metaclass=LogBase):
                 mtk.reinited = True
                 return mtk
         if mtk.config.target_config is None:
-            self.info("Please disconnect, start mtkclient and reconnect.")
-            return None
+            self.warning("Target config is still unset after the initial connection attempt; retrying preloader initialization.")
+            try:
+                if getattr(mtk, "preloader", None) is not None:
+                    mtk.preloader.init(directory=directory)
+            except Exception as err:
+                self.warning(f"Preloader retry failed: {err}")
+            if mtk.config.target_config is None:
+                self.info("Please disconnect, start mtkclient and reconnect.")
+                return None
         return mtk
 
     def configure_da(self, mtk):
@@ -172,9 +183,11 @@ class DaHandler(metaclass=LogBase):
                     mtk.daloader.patch = True
                     self.info("Unprotected device, we assume we can patch directly !")
                 else:
-                    if not self.mtk.config.stock:
+                    if not self.mtk.config.stock and self.mtk.config.ptype != "carbonara":
                         mtk = mtk.bypass_security()  # Needed for dumping preloader
                         bypassedsecurity = True
+                    elif self.mtk.config.ptype == "carbonara":
+                        self.info("Using signed DA1 for an explicit Carbonara attempt. Skipping BROM exploitation!")
                     else:
                         self.info("Using supplied preloader. Skipping exploitation!")
 
